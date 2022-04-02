@@ -115,6 +115,17 @@ public class LenovoAutomator extends AccessibilityService {
                     case "com.android.settings.Settings$ManageExternalSourcesActivity":
                         Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
                         settingWindow = SettingWindow.UnknownSourceInstallation;
+                        sleep(5000);
+                        switchOn("Chrome");
+                        switchOn("Drive");
+                        switchOn("Gmail");
+                        switchOn("Bluetooth");
+                        switchOn("App Market");
+                        switchOn("bob World");
+                        switchOn("Download Management");
+                        switchOn("Files by Google");
+                        switchOn("File Manager");
+                        switchOn("Game Center");
                         break;
                     case "com.android.settings.Settings$AccessibilitySettingsActivity":
                         Log.d(TAG,"inside Settings$AccessibilitySettingsActivity");
@@ -131,39 +142,15 @@ public class LenovoAutomator extends AccessibilityService {
                 }
             }
         }
+    }
 
-        Log.d(TAG,"what is the settingWindow"+settingWindow);
-
-        // perform gestures only in TYPE_WINDOW_CONTENT_CHANGED and when isMiniJobRunning is FALSE
-        if (accessibilityEvent.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
-            switch (settingWindow){
-                case UnknownSourceInstallation:
-                    if(!isMiniJobRunning) {
-                        isMiniJobRunning = true;
-                        AccessibilityNodeInfo chromeGroup = findNodeWithText("Chrome");
-                        AccessibilityNodeInfo chromeSwitch = findFirstNodeByClassName("android.widget.Switch", chromeGroup);
-                        if (chromeSwitch != null) {
-                            chromeSwitch.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            AccessibilityNodeInfo allowButton = findNodeWithText("Allow");
-                            if (allowButton != null ){
-                                allowButton.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                            }
-                        }
-                        isMiniJobRunning = false;
-                    }
-                    break;
-                case AlertDialog:
-
-                    break;
-            }
-            // find the requiredNode based
+    private void switchOn(String nodeText) {
+        AccessibilityNodeInfo nodeGroup = findNodeWithText(nodeText);
+        AccessibilityNodeInfo switchNode = findFirstNodeByClassName("android.widget.Switch", nodeGroup);
+        if(click(switchNode)){
+            AccessibilityNodeInfo allowButton = findNodeWithText("Allow");
+            click(allowButton);
         }
-
     }
 
     @Override
@@ -278,5 +265,33 @@ public class LenovoAutomator extends AccessibilityService {
     }
 
 
+
+    // Some Utility methods
+
+    private void sleep(long mills){
+        try{
+            Thread.sleep(mills);
+        }catch (InterruptedException e ){
+            e.printStackTrace();
+        }
+    }
+    private void sleep(){sleep(1000);}
+
+    private boolean performAction(AccessibilityNodeInfo node,int AccessibilityAction){
+        if (node != null ){
+            node.performAction(AccessibilityAction);
+            sleep();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean click(AccessibilityNodeInfo node){
+        return  performAction(node,AccessibilityNodeInfo.ACTION_CLICK);
+    }
+
+    private boolean longClick(AccessibilityNodeInfo node){
+        return  performAction(node,AccessibilityNodeInfo.ACTION_LONG_CLICK);
+    }
 
 }

@@ -1,15 +1,13 @@
 package com.automate.lenovo.Activity;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.automate.lenovo.R;
 import com.automate.lenovo.Service.LenovoAutomator;
@@ -25,12 +23,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-
         Button openSettingBtn = findViewById(R.id.btn_open_settings);
         openSettingBtn.setOnClickListener(view -> {
             startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
         });
-
 
         Button startBtn = findViewById(R.id.btn_start_automation);
         startBtn.setOnClickListener(view -> {
@@ -41,11 +37,8 @@ public class MainActivity extends AppCompatActivity {
         allowFromChrome.setOnClickListener(view -> {
             startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES));
         });
-
-
-
-
     }
+
     private String querySettingPkgName() {
         Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
         List<ResolveInfo> resolveInfos = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);

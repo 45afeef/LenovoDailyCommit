@@ -3,10 +3,12 @@ package com.automate.lenovo.Service;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.GestureDescription;
+import android.graphics.Path;
 import android.os.Build;
-import android.view.accessibility.AccessibilityEvent;
-
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.util.ArrayDeque;
@@ -89,15 +91,10 @@ public class LenovoAutomator extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent accessibilityEvent) {
 
-
-
-
         Log.d(TAG, "onAccessibilityEvent: done by afeef"+accessibilityEvent.toString());
         Log.d(TAG,"what is the classname" + accessibilityEvent.getClassName());
+        Log.d(TAG,"the entire event" + accessibilityEvent);
 
-
-
-        getAllViewInWindow(getRootInActiveWindow());
 
         // AccessibilityEvent TYPE_WINDOW_STATE_CHANGED trigger when a new activity is loaded
         // we assume every TYPE_WINDOW_STATE_CHANGED is a screen
@@ -110,22 +107,22 @@ public class LenovoAutomator extends AccessibilityService {
                 // Add current windowId to windowIdList to track the window (screen) history
                 windowId = accessibilityEvent.getWindowId();
                 windowIdList.add(windowId);
+                // sleep here as it may takes time to load the content in low configured devices
 
                 switch (accessibilityEvent.getClassName().toString()){
                     case "com.android.settings.Settings$ManageExternalSourcesActivity":
                         Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
                         settingWindow = SettingWindow.UnknownSourceInstallation;
-                        sleep(5000);
+                        sleep(6000);
                         switchOn("Chrome");
-                        switchOn("Drive");
-                        switchOn("Gmail");
-                        switchOn("Bluetooth");
-                        switchOn("App Market");
-                        switchOn("bob World");
-                        switchOn("Download Management");
-                        switchOn("Files by Google");
-                        switchOn("File Manager");
-                        switchOn("Game Center");
+
+                        sleep(100);
+                        swipeDownForNotification();
+                        performGestureClick(120,250);
+                        performGestureClick(280,250);
+                        performGestureClick(430,250);
+                        performGestureClick(580,250);
+
                         break;
                     case "com.android.settings.Settings$AccessibilitySettingsActivity":
                         Log.d(TAG,"inside Settings$AccessibilitySettingsActivity");
@@ -176,22 +173,6 @@ public class LenovoAutomator extends AccessibilityService {
             }
         }
         return null;
-    }
-
-    private void getAllViewInWindow(AccessibilityNodeInfo root) {
-        if (root == null) return;
-        nodeList.clear();
-        nodeList.add(root);
-
-        //Log.d("NodeInfo", root.toString());
-        //Log.d("childCount", " = " + root.getChildCount());
-
-        if (root != null || root.getChildCount() > 0) {
-            for (int i = 0; i < root.getChildCount(); i++) {
-                AccessibilityNodeInfo nodeInfo = root.getChild(i);
-                getAllViewInWindow(nodeInfo);
-            }
-        }
     }
 
     private String getAllTextFromNode(AccessibilityNodeInfo nodeInfo) {
@@ -265,6 +246,40 @@ public class LenovoAutomator extends AccessibilityService {
     }
 
 
+
+    private void swipeDownForNotification() {
+
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+
+        final int leftSideOfScreen = displayMetrics.widthPixels / 4;
+        final int middleXValue = leftSideOfScreen * 2;
+
+        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+        Path path = new Path();
+
+        // Swipe down
+        path.moveTo(middleXValue,0);
+        path.lineTo(middleXValue,displayMetrics.heightPixels);
+
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 50));
+        dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                super.onCompleted(gestureDescription);
+            }
+        }, null);
+        sleep();
+    }
+
+    private void performGestureClick(int x, int y) {
+        Path clickPath = new Path();
+        clickPath.moveTo(x,y);
+        GestureDescription.StrokeDescription clickStroke = new GestureDescription.StrokeDescription(clickPath, 0, 1);
+        GestureDescription.Builder clickBuilder = new GestureDescription.Builder();
+        clickBuilder.addStroke(clickStroke);
+        dispatchGesture(clickBuilder.build(), null, null);
+        sleep(100);
+    }
 
     // Some Utility methods
 

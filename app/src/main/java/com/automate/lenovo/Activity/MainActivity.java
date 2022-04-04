@@ -13,6 +13,7 @@ import com.automate.lenovo.R;
 import com.automate.lenovo.Service.LenovoAutomator;
 
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         Button openSettingBtn = findViewById(R.id.btn_open_settings);
         openSettingBtn.setOnClickListener(view -> {
@@ -36,6 +36,23 @@ public class MainActivity extends AppCompatActivity {
         Button allowFromChrome = findViewById(R.id.allow_from_chrome_btn);
         allowFromChrome.setOnClickListener(view -> {
             startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES));
+        });
+
+        Button disableBtn = findViewById(R.id.btn_disable_apps);
+        disableBtn.setOnClickListener(view -> {
+//            No Activity found to handle the Intent
+//            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS));
+            startActivity(new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
+
+        });
+
+        findViewById(R.id.button2).setOnClickListener(view -> {
+            startActivity(new Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS));
+        });
+        findViewById(R.id.button3).setOnClickListener(view -> {
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+//            Settings.ACTION_APPLICATION_SETTINGS
+
         });
     }
 

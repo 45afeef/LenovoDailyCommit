@@ -1,6 +1,8 @@
 package com.automate.lenovo.Service;
 
 
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN;
+
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
@@ -26,15 +28,16 @@ public class LenovoAutomator extends AccessibilityService {
     int windowId = 0;
 
     boolean isMiniJobRunning = false;
+    private boolean isFirstRun = true;
 
     enum SettingWindow{
+        Home,
         Default,
         UnknownSourceInstallation,
         AlertDialog,
         Accessibility,
     }
     SettingWindow settingWindow = SettingWindow.Default;
-
 
     List<AccessibilityNodeInfo> nodeList = new ArrayList<>();
 
@@ -48,13 +51,13 @@ public class LenovoAutomator extends AccessibilityService {
 
         // Set the type of events that this service wants to listen to. Others
         // won't be passed to this service.
-        info.eventTypes = AccessibilityEvent.TYPES_ALL_MASK |
-                AccessibilityEvent.TYPE_VIEW_CLICKED |
-                AccessibilityEvent.TYPE_VIEW_FOCUSED |
-                AccessibilityEvent.TYPE_VIEW_SCROLLED |
-                AccessibilityEvent.TYPE_VIEW_LONG_CLICKED |
-                AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED |
-                AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
+        info.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ;
+        // AccessibilityEvent.TYPES_ALL_MASK |
+        // AccessibilityEvent.TYPE_VIEW_CLICKED |
+        // AccessibilityEvent.TYPE_VIEW_FOCUSED |
+        // AccessibilityEvent.TYPE_VIEW_SCROLLED |
+        // AccessibilityEvent.TYPE_VIEW_LONG_CLICKED |
+        // AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
 
         // If you only want this service to work with specific applications, set their
         // package names here. Otherwise, when the service is activated, it will listen
@@ -97,49 +100,102 @@ public class LenovoAutomator extends AccessibilityService {
 
 
         // AccessibilityEvent TYPE_WINDOW_STATE_CHANGED trigger when a new activity is loaded
-        // we assume every TYPE_WINDOW_STATE_CHANGED is a screen
-        if (accessibilityEvent.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED){
-            // check if the currentWindow is new or old one
-            if(windowIdList.contains(accessibilityEvent.getWindowId())){
-                // This is a old Activity
-            }else{
-                // This is a new Activity
-                // Add current windowId to windowIdList to track the window (screen) history
-                windowId = accessibilityEvent.getWindowId();
-                windowIdList.add(windowId);
-                // sleep here as it may takes time to load the content in low configured devices
+        // we assume every TYPE_WINDOW_STATE_CHANGED is a new screen
 
-                switch (accessibilityEvent.getClassName().toString()){
-                    case "com.android.settings.Settings$ManageExternalSourcesActivity":
-                        Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
-                        settingWindow = SettingWindow.UnknownSourceInstallation;
-                        sleep(6000);
-                        switchOn("Chrome");
+        // check if the currentWindow is new or old one
+        // "windowIdList not contains" will help us to confirm every screen is considered only once
+        if(!windowIdList.contains(accessibilityEvent.getWindowId())){
+            // This is a new Activity
+            // Add current windowId to windowIdList to track the window (screen) history
+            windowId = accessibilityEvent.getWindowId();
+            windowIdList.add(windowId);
+            // sleep here as it may takes time to load the content in low configured devices
 
-                        sleep(100);
-                        swipeDownForNotification();
-                        performGestureClick(120,250);
-                        performGestureClick(280,250);
-                        performGestureClick(430,250);
-                        performGestureClick(580,250);
 
-                        break;
-                    case "com.android.settings.Settings$AccessibilitySettingsActivity":
-                        Log.d(TAG,"inside Settings$AccessibilitySettingsActivity");
-                        settingWindow = SettingWindow.Accessibility;
-                        break;
-                    case "android.app.AlertDialog":
-                        Log.d(TAG,"inside android.app.AlertDialog");
-                        settingWindow = SettingWindow.AlertDialog;
-                        break;
-                    default:
-                        Log.e("Unexpected value: " , accessibilityEvent.getClassName().toString());
-                        settingWindow = SettingWindow.Default;
-                        break;
-                }
+            switch (accessibilityEvent.getClassName().toString()){
+                case "com.android.settings.homepage.SettingsHomepageActivity":
+                    sleep(6000);
+                    // TODO Create utility function to scroll down until find a node with the required text
+                    AccessibilityNodeInfo devicePrivacy =
+                            scrollAndFindTheNodeWithText("System");
+
+                    Log.d("DeviceandPrivacy","yeah"+devicePrivacy);
+
+                    break;
+                case "com.android.settings.Settings$ManageExternalSourcesActivity":
+                    Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
+                    settingWindow = SettingWindow.UnknownSourceInstallation;
+                    switchOn("Chrome");
+
+                    sleep(100);
+                    swipeDownForNotification();
+                    performGestureClick(120,250);
+                    performGestureClick(280,250);
+                    performGestureClick(430,250);
+                    performGestureClick(580,250);
+
+                    break;
+                case "com.android.settings.Settings$AccessibilitySettingsActivity":
+                    Log.d(TAG,"inside Settings$AccessibilitySettingsActivity");
+                    settingWindow = SettingWindow.Accessibility;
+                    break;
+                case "android.app.AlertDialog":
+                    Log.d(TAG,"inside android.app.AlertDialog");
+                    settingWindow = SettingWindow.AlertDialog;
+                    break;
+                default:
+                    Log.e("Unexpected value: " , accessibilityEvent.getClassName().toString());
+                    settingWindow = SettingWindow.Default;
+                    break;
             }
         }
+
     }
+
+    enum ScrollDirection{
+        Down,Up,Left,Right
+    }
+    private AccessibilityNodeInfo scrollAndFindTheNodeWithText(String text) {
+        AccessibilityNodeInfo node = findNodeWithText(text);
+
+        if(node != null){
+            return  node;
+        }else{
+            Log.d("Scrolling", "down as we can't find the node with text " + text);
+            swipe(SwipeDirection.Up);
+            return scrollAndFindTheNodeWithText(text);
+//            AccessibilityNodeInfo scroll = findScrollableNode(
+//                    getRootInActiveWindow(),
+//                    ACTION_SCROLL_DOWN
+//            );
+//            if (scroll != null) {
+//                scroll.performAction(ACTION_SCROLL_DOWN.getId());
+//                return scrollAndFindTheNodeWithText(text);
+//            }else {
+//                return  null;
+//            }
+        }
+    }
+
+
+    private AccessibilityNodeInfo findScrollableNode(
+            AccessibilityNodeInfo root,
+            AccessibilityNodeInfo.AccessibilityAction action
+    ) {
+        Deque<AccessibilityNodeInfo> deque = new ArrayDeque<>();
+        deque.add(root);
+        while (!deque.isEmpty()) {
+            AccessibilityNodeInfo node = deque.removeFirst();
+            if (node.getActionList().contains(action)) {
+                return node;
+            }
+            for (int i = 0; i < node.getChildCount(); i++) {
+                deque.addLast(node.getChild(i));
+            }
+        }
+        return null;
+    }
+
 
     private void switchOn(String nodeText) {
         AccessibilityNodeInfo nodeGroup = findNodeWithText(nodeText);
@@ -247,6 +303,66 @@ public class LenovoAutomator extends AccessibilityService {
 
 
 
+    enum SwipeDirection{
+        Down,
+        Up,
+        Left,
+        Right
+    }
+
+    private void swipe(int mX,int mY, int lX,int lY){
+        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+        Path path = new Path();
+
+        path.moveTo(mX,mY);
+        path.lineTo(lX,lY);
+
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 50));
+        dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
+            @Override
+            public void onCompleted(GestureDescription gestureDescription) {
+                super.onCompleted(gestureDescription);
+            }
+        }, null);
+        sleep();
+    }
+
+    private void swipe(SwipeDirection swipeDirection){
+
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+
+        final int screenWidth = displayMetrics.widthPixels;
+        final int x2 = screenWidth/2;
+        final int x1 = x2/2;
+        final int x3 = x1 + x2;
+
+        final int screenHeight = displayMetrics.heightPixels;
+        final int y2 = screenHeight/2;
+        final int y1 = y2/2;
+        final int y3 = y1 + y2;
+
+        switch (swipeDirection){
+            case Down:
+                // Swipe down
+                swipe(x2,y1,x2,y3);
+                break;
+            case Up:
+                // Swipe Up
+                swipe(x2,y3,x2,y1);
+                break;
+            case Left:
+                // Swipe Left
+                swipe(x3,y2,x1,y2);
+                break;
+            case Right:
+                // Swipe Up
+                swipe(x3,y2,x1,y2);
+                break;
+            default:
+                return;
+        }
+    }
+
     private void swipeDownForNotification() {
 
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
@@ -261,7 +377,7 @@ public class LenovoAutomator extends AccessibilityService {
         path.moveTo(middleXValue,0);
         path.lineTo(middleXValue,displayMetrics.heightPixels);
 
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 50));
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 5000));
         dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
             @Override
             public void onCompleted(GestureDescription gestureDescription) {

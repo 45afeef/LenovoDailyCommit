@@ -1,7 +1,10 @@
 package com.automate.lenovo.Service;
 
 
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_LONG_CLICK;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -115,15 +118,22 @@ public class LenovoAutomator extends AccessibilityService {
             switch (accessibilityEvent.getClassName().toString()){
                 case "com.oppo.settings.SettingsActivity":
                 case "com.android.settings.homepage.SettingsHomepageActivity":
+                    // wait for a while so that the auto app can make sure that settings app is fully loaded
 //                    sleep(6000);
-                    // TODO Create utility function to scroll down until find a node with the required text
-                    AccessibilityNodeInfo soundNode = findNodeWithText("Sound");
-                    performGestureClick(soundNode);
 
-//                    AccessibilityNodeInfo devicePrivacy =
-//                            scrollAndFindTheNodeWithText("Sound");
 
-//                    Log.d("DeviceandPrivacy","yeah"+devicePrivacy);
+                    // Point 10
+//                    enableDeveloperOptionsInEmulator();
+                    // enableDeveloperOptionsInTablet();
+                    //
+                    // Still Need to add script to enable usb debugging
+
+
+                    // Point 2
+                    // Apps and notifications
+                    // Disable Apps Completed
+                    appsAndNotifications();
+
 
                     // 200 145
                     // 325 145
@@ -161,8 +171,117 @@ public class LenovoAutomator extends AccessibilityService {
 
     }
 
+    private void appsAndNotifications() {
+        AccessibilityNodeInfo appAndNotifications = scrollAndFindTheNodeWithText("Apps & notifications");
+        AccessibilityNodeInfo clickable = getParentNodeWithAction(appAndNotifications,ACTION_CLICK);
+        if(click(clickable)){
+            sleep(5000);
+
+            // TODO change the node text into "SEE ALL 32 APPS"
+            AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 29 apps");
+            if(performGestureClick(seeAllAppBtn)){
+                sleep();
+                disableApp("Android Auto");
+//                disableApp("Digital Wellbeing");
+//                disableApp("Google Play Movies & TV");
+
+
+
+
+                disableApp("Calendar");
+                disableApp("chrome");
+                disableApp("clock");
+                disableApp("drive");
+                disableApp("duo");
+
+
+
+
+
+
+//                disableApp("Keep notes");
+//                disableApp("MusicFX");
+//                disableApp("Sound Recorder");
+                disableApp("YouTube");
+//                disableApp("YouTube Music");
+
+
+            }
+
+
+        }
+    }
+
+    private void disableApp(String appName) {
+        AccessibilityNodeInfo appNameNode = scrollAndFindTheNodeWithText(appName);
+        AccessibilityNodeInfo clickable = getParentNodeWithAction(appNameNode,ACTION_CLICK);
+        if(click(clickable)){
+            sleep();
+            AccessibilityNodeInfo disableBtn = findNodeWithText("Disable");
+            if(performGestureClick(disableBtn)){
+                sleep();
+                AccessibilityNodeInfo disableAppBtn = findNodeWithText("Disable app");
+                performGestureClick(disableAppBtn);
+                sleep();
+            }
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
+        }
+        sleep();
+    }
+
+    private void enableDeveloperOptionsInEmulator() {
+        AccessibilityNodeInfo aboutTablet = scrollAndFindTheNodeWithText("About emulated device");
+        AccessibilityNodeInfo clickableTablet =  getParentNodeWithAction(aboutTablet,ACTION_CLICK);
+        if(click(clickableTablet)){
+            sleep();
+            AccessibilityNodeInfo buildNumber = scrollAndFindTheNodeWithText("Build number");
+            for (int i = 0; i<7 ; i++){
+                performGestureClick(buildNumber);
+            }
+        }
+    }
+
+    private void enableDeveloperOptionsInTablet() {
+
+        // Go to System > About Tablet > Build Number
+        // Go to System > Developer Options > Enable USB Debugging
+        AccessibilityNodeInfo systemNode = scrollAndFindTheNodeWithText("System");
+        AccessibilityNodeInfo clickableNode = getParentNodeWithAction(systemNode,ACTION_CLICK);
+        if(click(clickableNode)){
+            // System subSetting menu opened
+            // wait a while
+            sleep();
+            AccessibilityNodeInfo aboutTablet = scrollAndFindTheNodeWithText("About Tablet");
+            AccessibilityNodeInfo clickableTablet =  getParentNodeWithAction(aboutTablet,ACTION_CLICK);
+            if(click(clickableTablet)){
+                sleep();
+                AccessibilityNodeInfo buildNumber = scrollAndFindTheNodeWithText("Build number");
+                for (int i = 0; i<8 ; i++){
+                    performGestureClick(buildNumber);
+                }
+                sleep();
+
+            }else{
+                // Todo Error on clicking the about tablet
+            }
+        }else{
+            // TODO error while clicking the SYSTEM node
+        }
+    }
+
     enum ScrollDirection{
         Down,Up,Left,Right
+    }
+    private AccessibilityNodeInfo getParentNodeWithAction(AccessibilityNodeInfo node, AccessibilityNodeInfo.AccessibilityAction action) {
+        if(node == null) return null;
+
+        if(node.getActionList().contains(action)){
+            return  node;
+        }else{
+            return  getParentNodeWithAction(node.getParent(),action);
+        }
+
     }
     private AccessibilityNodeInfo scrollAndFindTheNodeWithText(String text) {
         AccessibilityNodeInfo node = findNodeWithText(text);
@@ -171,23 +290,17 @@ public class LenovoAutomator extends AccessibilityService {
             return  node;
         }else{
             Log.d("Scrolling", "down as we can't find the node with text " + text);
-            swipe(SwipeDirection.Up);
-            return scrollAndFindTheNodeWithText(text);
-//            AccessibilityNodeInfo scroll = findScrollableNode(
-//                    getRootInActiveWindow(),
-//                    ACTION_SCROLL_DOWN
-//            );
-//            if (scroll != null) {
-//                scroll.performAction(ACTION_SCROLL_DOWN.getId());
-//                return scrollAndFindTheNodeWithText(text);
-//            }else {
-//                return  null;
-//            }
+            AccessibilityNodeInfo scrollNode = findNodeWithAction(getRootInActiveWindow(),ACTION_SCROLL_FORWARD);
+            if(performAction(scrollNode, ACTION_SCROLL_FORWARD.getId())){
+                return scrollAndFindTheNodeWithText(text);
+            }else {
+                return null;
+            }
         }
     }
 
 
-    private AccessibilityNodeInfo findScrollableNode(
+    private AccessibilityNodeInfo findNodeWithAction(
             AccessibilityNodeInfo root,
             AccessibilityNodeInfo.AccessibilityAction action
     ) {
@@ -195,6 +308,7 @@ public class LenovoAutomator extends AccessibilityService {
         deque.add(root);
         while (!deque.isEmpty()) {
             AccessibilityNodeInfo node = deque.removeFirst();
+            Log.d(TAG, "findNodeWithAction: afeefafeef "+node.getActionList());
             if (node.getActionList().contains(action)) {
                 return node;
             }
@@ -208,7 +322,7 @@ public class LenovoAutomator extends AccessibilityService {
 
     private void switchOn(String nodeText) {
         AccessibilityNodeInfo nodeGroup = findNodeWithText(nodeText);
-        AccessibilityNodeInfo switchNode = findFirstNodeByClassName("android.widget.Switch", nodeGroup);
+        AccessibilityNodeInfo switchNode = findNodeByClassName("android.widget.Switch", nodeGroup);
         if(click(switchNode)){
             AccessibilityNodeInfo allowButton = findNodeWithText("Allow");
             click(allowButton);
@@ -220,13 +334,12 @@ public class LenovoAutomator extends AccessibilityService {
 
     }
 
-
     private AccessibilityNodeInfo findNodeWithText(String text) {
         Deque<AccessibilityNodeInfo> deque = new ArrayDeque<>();
         deque.add(getRootInActiveWindow());
         while (!deque.isEmpty()) {
             AccessibilityNodeInfo node = deque.removeFirst();
-            if (getAllTextFromNode(node).equals(text)) {
+            if (getAllTextFromNode(node).equalsIgnoreCase(text)) {
                 return node;
             }
             for (int i = 0; i < node.getChildCount(); i++) {
@@ -264,7 +377,7 @@ public class LenovoAutomator extends AccessibilityService {
         return nodeString;
     }
 
-    private AccessibilityNodeInfo findFirstNodeByClassName(String className,AccessibilityNodeInfo group){
+    private AccessibilityNodeInfo findNodeByClassName(String className,AccessibilityNodeInfo group){
         if( className == null){
             return null;
         }
@@ -326,7 +439,7 @@ public class LenovoAutomator extends AccessibilityService {
         path.moveTo(mX,mY);
         path.lineTo(lX,lY);
 
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 50));
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 1000));
         dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
             @Override
             public void onCompleted(GestureDescription gestureDescription) {
@@ -353,19 +466,19 @@ public class LenovoAutomator extends AccessibilityService {
         switch (swipeDirection){
             case Down:
                 // Swipe down
-                swipe(x2,y1,x2,y3);
+                swipe(x2,y1,x3,y3);
                 break;
             case Up:
                 // Swipe Up
-                swipe(x2,y3,x2,y1);
+                swipe(x2,y3,x3,y1);
                 break;
             case Left:
                 // Swipe Left
-                swipe(x3,y2,x1,y2);
+                swipe(x3,y2,x1,y1);
                 break;
             case Right:
                 // Swipe Up
-                swipe(x1,y2,x3,y2);
+                swipe(x1,y2,x3,y1);
                 break;
         }
     }
@@ -384,7 +497,7 @@ public class LenovoAutomator extends AccessibilityService {
         path.moveTo(middleXValue,0);
         path.lineTo(middleXValue,displayMetrics.heightPixels);
 
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 1000));
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 100));
         dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
             @Override
             public void onCompleted(GestureDescription gestureDescription) {
@@ -396,21 +509,22 @@ public class LenovoAutomator extends AccessibilityService {
 
 
 
-    private void performGestureClick(AccessibilityNodeInfo node) {
-        if (node == null) return;
+    private boolean performGestureClick(AccessibilityNodeInfo node) {
+        if (node == null) return false;
 
         Rect rect = new Rect();
         node.getBoundsInScreen(rect);
-        performGestureClick(rect.centerX(),rect.centerY());
+        return performGestureClick(rect.centerX(),rect.centerY());
     }
-    private void performGestureClick(int x, int y) {
+    private boolean performGestureClick(int x, int y) {
         Path clickPath = new Path();
         clickPath.moveTo(x,y);
-        GestureDescription.StrokeDescription clickStroke = new GestureDescription.StrokeDescription(clickPath, 0, 1);
+        GestureDescription.StrokeDescription clickStroke = new GestureDescription.StrokeDescription(clickPath, 0, 10);
         GestureDescription.Builder clickBuilder = new GestureDescription.Builder();
         clickBuilder.addStroke(clickStroke);
         dispatchGesture(clickBuilder.build(), null, null);
         sleep(100);
+        return true;
     }
 
     // Some Utility methods
@@ -434,11 +548,11 @@ public class LenovoAutomator extends AccessibilityService {
     }
 
     private boolean click(AccessibilityNodeInfo node){
-        return  performAction(node,AccessibilityNodeInfo.ACTION_CLICK);
+        return  performAction(node,ACTION_CLICK.getId());
     }
 
     private boolean longClick(AccessibilityNodeInfo node){
-        return  performAction(node,AccessibilityNodeInfo.ACTION_LONG_CLICK);
+        return  performAction(node, ACTION_LONG_CLICK.getId());
     }
     private void printNode(AccessibilityNodeInfo nodeInfo) {
         if (nodeInfo == null) {

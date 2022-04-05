@@ -7,6 +7,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -111,24 +112,32 @@ public class LenovoAutomator extends AccessibilityService {
             windowIdList.add(windowId);
             // sleep here as it may takes time to load the content in low configured devices
 
-
             switch (accessibilityEvent.getClassName().toString()){
+                case "com.oppo.settings.SettingsActivity":
                 case "com.android.settings.homepage.SettingsHomepageActivity":
-                    sleep(6000);
+//                    sleep(6000);
                     // TODO Create utility function to scroll down until find a node with the required text
-                    AccessibilityNodeInfo devicePrivacy =
-                            scrollAndFindTheNodeWithText("System");
+                    AccessibilityNodeInfo soundNode = findNodeWithText("Sound");
+                    performGestureClick(soundNode);
 
-                    Log.d("DeviceandPrivacy","yeah"+devicePrivacy);
+//                    AccessibilityNodeInfo devicePrivacy =
+//                            scrollAndFindTheNodeWithText("Sound");
 
+//                    Log.d("DeviceandPrivacy","yeah"+devicePrivacy);
+
+                    // 200 145
+                    // 325 145
+                    // 450 145
                     break;
                 case "com.android.settings.Settings$ManageExternalSourcesActivity":
+                    sleep(6000);
                     Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
                     settingWindow = SettingWindow.UnknownSourceInstallation;
                     switchOn("Chrome");
 
                     sleep(100);
                     swipeDownForNotification();
+                    sleep(1200);
                     performGestureClick(120,250);
                     performGestureClick(280,250);
                     performGestureClick(430,250);
@@ -356,10 +365,8 @@ public class LenovoAutomator extends AccessibilityService {
                 break;
             case Right:
                 // Swipe Up
-                swipe(x3,y2,x1,y2);
+                swipe(x1,y2,x3,y2);
                 break;
-            default:
-                return;
         }
     }
 
@@ -377,7 +384,7 @@ public class LenovoAutomator extends AccessibilityService {
         path.moveTo(middleXValue,0);
         path.lineTo(middleXValue,displayMetrics.heightPixels);
 
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 5000));
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(path, 100, 1000));
         dispatchGesture(gestureBuilder.build(), new GestureResultCallback() {
             @Override
             public void onCompleted(GestureDescription gestureDescription) {
@@ -387,6 +394,15 @@ public class LenovoAutomator extends AccessibilityService {
         sleep();
     }
 
+
+
+    private void performGestureClick(AccessibilityNodeInfo node) {
+        if (node == null) return;
+
+        Rect rect = new Rect();
+        node.getBoundsInScreen(rect);
+        performGestureClick(rect.centerX(),rect.centerY());
+    }
     private void performGestureClick(int x, int y) {
         Path clickPath = new Path();
         clickPath.moveTo(x,y);
@@ -424,5 +440,17 @@ public class LenovoAutomator extends AccessibilityService {
     private boolean longClick(AccessibilityNodeInfo node){
         return  performAction(node,AccessibilityNodeInfo.ACTION_LONG_CLICK);
     }
+    private void printNode(AccessibilityNodeInfo nodeInfo) {
+        if (nodeInfo == null) {
+            Log.d("afi", "node is null");
+            return;
+        }
+        Log.d("afinodeText", nodeInfo.getText() + "");
+        Log.d("afiIdResName", nodeInfo.getViewIdResourceName() + "");
+        Log.d("afiClassName", nodeInfo.getClassName() + "");
+        Log.d("afiNodeInfo",nodeInfo.toString());
 
+
+        printNode(nodeInfo.getParent());
+    }
 }

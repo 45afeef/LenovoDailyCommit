@@ -131,8 +131,8 @@ public class LenovoAutomator extends AccessibilityService {
 
                     // Point 2
                     // Apps and notifications
-                    // Disable Apps Completed
                     appsAndNotifications();
+                    // Disable Apps Completed
 
 
                     // 200 145
@@ -177,39 +177,106 @@ public class LenovoAutomator extends AccessibilityService {
         if(click(clickable)){
             sleep(5000);
 
+            // Point 2. Disable apps:
             // TODO change the node text into "SEE ALL 32 APPS"
             AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 29 apps");
-            if(performGestureClick(seeAllAppBtn)){
+            // Disable or Uninstall all apps
+            if(true){}else if(performGestureClick(seeAllAppBtn)){
                 sleep();
                 disableApp("Android Auto");
-//                disableApp("Digital Wellbeing");
-//                disableApp("Google Play Movies & TV");
-
-
-
-
-                disableApp("Calendar");
-                disableApp("chrome");
-                disableApp("clock");
-                disableApp("drive");
-                disableApp("duo");
-
-
-
-
-
-
-//                disableApp("Keep notes");
-//                disableApp("MusicFX");
-//                disableApp("Sound Recorder");
+                // Point 4. Allow Unknown Apps
+                AccessibilityNodeInfo chromeNode = findNodeWithText("Chrome");
+                if(performGestureClick(chromeNode)){
+                    sleep();
+                    AccessibilityNodeInfo installUnknownAppsNode = scrollAndFindTheNodeWithText("Install unknown apps");
+                    if(performGestureClick(installUnknownAppsNode)){
+                        sleep();
+                        AccessibilityNodeInfo allowTextNode = scrollAndFindTheNodeWithText("Allow from this source");
+                        AccessibilityNodeInfo allowSwitch = findNodeWithAction(allowTextNode.getParent(),ACTION_CLICK);
+                        sleep();
+                        click(allowSwitch);
+                        sleep();
+                        performGlobalAction(GLOBAL_ACTION_BACK);
+                        sleep();
+                    }
+                    performGlobalAction(GLOBAL_ACTION_BACK);
+                    sleep();
+                }
+                // Point 4 completed
+                disableApp("Digital Wellbeing");
+                disableApp("Google Play Movies & TV");
+                disableApp("Keep notes");
+                unInstallApp("MusicFX");
+                unInstallApp("Sound Recorder");
                 disableApp("YouTube");
-//                disableApp("YouTube Music");
+                disableApp("YouTube Music");
+
+                sleep();
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
 
 
+
+
+
+
+
+
+
+
+
+//                disableApp("Calendar");
+//                disableApp("chrome");
+//                disableApp("clock");
+//                disableApp("drive");
+//                disableApp("duo");
             }
+            // Disable or Uninstall of apps completed
+            // Play with notifications
 
 
+            // Now
+            // Point 3. Disable Notifications for all apps
+            AccessibilityNodeInfo notificationsNode = findNodeWithText("Notifications");
+            if(performGestureClick(notificationsNode)){
+                sleep();
+
+                // Don't show notifications on lockscreen
+                AccessibilityNodeInfo notificationsOnLockScreen = findNodeWithText("Notifications on lockscreen");
+                if(performGestureClick(notificationsOnLockScreen)){
+                    sleep();
+                    AccessibilityNodeInfo dontShow = findNodeWithText("Don’t show notifications");
+                    performGestureClick(dontShow);
+                    sleep();
+                }
+
+                // Go to advanced
+                AccessibilityNodeInfo advancedNode = scrollAndFindTheNodeWithText("Advanced");
+                if(performGestureClick(advancedNode)){
+                    sleep();
+
+                    clickOnTheParentsClickable("Suggested actions and replies");
+                    clickOnTheParentsClickable("Allow notification dots");
+                    clickOnTheParentsClickable("Blink light");
+                    clickOnTheParentsClickable("Display status bar icons");
+                    sleep();
+                }
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
+            }
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
+
+            // TODO reached here
+            // Now play with default apps
         }
+    }
+
+    private void clickOnTheParentsClickable(String nodeText) {
+        AccessibilityNodeInfo node = findNodeWithText(nodeText);
+        AccessibilityNodeInfo clickableSibling = findNodeWithAction(node.getParent(),ACTION_CLICK);
+        performGestureClick(clickableSibling);
+        sleep();
     }
 
     private void disableApp(String appName) {
@@ -225,6 +292,23 @@ public class LenovoAutomator extends AccessibilityService {
                 sleep();
             }
             performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
+        }
+        sleep();
+    }
+
+    private void unInstallApp(String appName) {
+        AccessibilityNodeInfo appNameNode = scrollAndFindTheNodeWithText(appName);
+        AccessibilityNodeInfo clickable = getParentNodeWithAction(appNameNode,ACTION_CLICK);
+        if(click(clickable)){
+            sleep();
+            AccessibilityNodeInfo disableBtn = findNodeWithText("UNINSTALL");
+            if(performGestureClick(disableBtn)){
+                sleep();
+                AccessibilityNodeInfo disableAppBtn = findNodeWithText("OK ");
+                performGestureClick(disableAppBtn);
+                sleep();
+            }
             sleep();
         }
         sleep();
@@ -339,7 +423,8 @@ public class LenovoAutomator extends AccessibilityService {
         deque.add(getRootInActiveWindow());
         while (!deque.isEmpty()) {
             AccessibilityNodeInfo node = deque.removeFirst();
-            if (getAllTextFromNode(node).equalsIgnoreCase(text)) {
+            Log.d(TAG, "findNodeWithText: afeefafeefafeef " + getAllTextFromNode(node));
+            if (getAllTextFromNode(node).replace("'","").equalsIgnoreCase(text)) {
                 return node;
             }
             for (int i = 0; i < node.getChildCount(); i++) {

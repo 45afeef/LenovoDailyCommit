@@ -125,8 +125,6 @@ public class LenovoAutomator extends AccessibilityService {
                     sleep(2000);
 
                     // Completed Points
-                    // Point 1
-                    swipeDownForNotification();
 
                     // Point 2
                     // Point 3
@@ -148,6 +146,9 @@ public class LenovoAutomator extends AccessibilityService {
                     //enableDeveloperOptionsInEmulator();
                     enableDeveloperOptionsInTablet();
 
+
+                    // Point 1
+                    swipeDownForNotification();
 
                     break;
                 case "com.android.settings.Settings$ManageExternalSourcesActivity":
@@ -198,7 +199,7 @@ public class LenovoAutomator extends AccessibilityService {
 
             // Point 2. Disable apps:
             // TODO change the node text into "SEE ALL 33(32+1)  APPS"
-            AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 29 apps");
+            AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 30 apps");
             if(seeAllAppBtn == null){
                 seeAllAppBtn = findNodeWithText("App info");
             }
@@ -271,6 +272,7 @@ public class LenovoAutomator extends AccessibilityService {
                     clickOnTheParentsClickable("Show Google App");
                     sleep();
                     performGlobalAction(GLOBAL_ACTION_BACK);
+                    sleep();
                 }
                 performGlobalAction(GLOBAL_ACTION_BACK);
                 sleep();
@@ -412,7 +414,7 @@ public class LenovoAutomator extends AccessibilityService {
                 performGlobalAction(GLOBAL_ACTION_BACK);
                 sleep();
             }
-
+            sleep(2000);
             AccessibilityNodeInfo devOptions = scrollAndFindTheNodeWithText("Developer Options");
             if(click(clickableParent(devOptions))){
                 sleep();
@@ -667,20 +669,18 @@ public class LenovoAutomator extends AccessibilityService {
             @Override
             public void onCompleted(GestureDescription gestureDescription) {
                 super.onCompleted(gestureDescription);
-            }
-        }, null);
-        sleep(2000);
 //        performGestureClick(120,250);
 //        performGestureClick(280,250);
 //        performGestureClick(430,250);
 //        performGestureClick(580,250);
-        // Specific points for lenovo tablets
-         performGestureClick(200, 145);
-         performGestureClick(325, 145);
-         performGestureClick(450, 145);
-        sleep();
-        performGlobalAction(GLOBAL_ACTION_BACK);
-        sleep();
+                // Specific points for lenovo tablets
+                performGestureClick(200, 145);
+                performGestureClick(325, 145);
+                performGestureClick(450, 145);
+                sleep();
+            }
+        }, null);
+        sleep(2000);
 
     }
 

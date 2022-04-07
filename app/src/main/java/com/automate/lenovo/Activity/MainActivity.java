@@ -14,7 +14,6 @@ import com.automate.lenovo.R;
 import com.automate.lenovo.Service.LenovoAutomator;
 
 import java.util.List;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.button2).setOnClickListener(view -> {
            startActivity(new Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS));
         });
-        findViewById(R.id.button3).setOnClickListener(view -> {
+        findViewById(R.id.start_automation_btn).setOnClickListener(view -> {
 
             // Set Audio
             AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);

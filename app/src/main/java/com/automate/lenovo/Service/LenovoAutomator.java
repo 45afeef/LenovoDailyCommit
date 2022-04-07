@@ -9,6 +9,8 @@ import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityActi
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.media.MediaActionSound;
@@ -111,65 +113,61 @@ public class LenovoAutomator extends AccessibilityService {
 
         // check if the currentWindow is new or old one
         // "windowIdList not contains" will help us to confirm every screen is considered only once
-        if(!windowIdList.contains(accessibilityEvent.getWindowId())){
+
+
+
+        if (!windowIdList.contains(accessibilityEvent.getWindowId())) {
             // This is a new Activity
             // Add current windowId to windowIdList to track the window (screen) history
             windowId = accessibilityEvent.getWindowId();
             windowIdList.add(windowId);
             // sleep here as it may takes time to load the content in low configured devices
 
-            switch (accessibilityEvent.getClassName().toString()){
+            switch (accessibilityEvent.getClassName().toString()) {
                 case "com.oppo.settings.SettingsActivity":
                 case "com.android.settings.homepage.SettingsHomepageActivity":
-                    // wait for a while so that the auto app can make sure that settings app is fully loaded
-                    sleep(2000);
 
-                    // Completed Points
+                    SharedPreferences sharedpreferences = getSharedPreferences("LenovoAutomator", Context.MODE_PRIVATE);
+                    boolean canIRun = sharedpreferences.getBoolean("CANIRUN", false);
 
-                    // Point 2
-                    // Point 3
-                    // Point 4
-                    // Point 5
-                    appsAndNotifications();
+                    if(canIRun) {
+                        SharedPreferences.Editor editor = sharedpreferences.edit();
+                        editor.putBoolean("CANIRUN", false);
+                        editor.commit();
 
-                    // Point 6. Indicator light
-                    // Point 7. Sleep Setting
-                    displaySettings();
+                        // wait for a while so that the auto app can make sure that settings app is fully loaded
+                        sleep(2000);
 
-                    // Point 8. Tablet Volume
-                    // already done when click on the automate button
+                        // Completed Points
 
-                    // Point 9. Disable TalkBack shortcut
-                    turnOffAccessibilityVolume();
+                        // Point 2
+                        // Point 3
+                        // Point 4
+                        // Point 5
+                        appsAndNotifications();
 
-                    // Point 10
-                    //enableDeveloperOptionsInEmulator();
-                    enableDeveloperOptionsInTablet();
+                        // Point 6. Indicator light
+                        // Point 7. Sleep Setting
+                        displaySettings();
+
+                        // Point 8. Tablet Volume
+                        // already done when click on the automate button
+
+                        // Point 9. Disable TalkBack shortcut
+                        turnOffAccessibilityVolume();
+
+                        // Point 10
+                        //enableDeveloperOptionsInEmulator();
+                        enableDeveloperOptionsInTablet();
 
 
-                    // Point 1
-                    swipeDownForNotification();
-
+                        // Point 1
+                        swipeDownForNotification();
+                    }
                     break;
-                case "com.android.settings.Settings$ManageExternalSourcesActivity":
-                    sleep(6000);
-                    Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
-                    settingWindow = SettingWindow.UnknownSourceInstallation;
-                    switchOn("Chrome");
-                    break;
-                case "com.android.settings.Settings$AccessibilitySettingsActivity":
-                    Log.d(TAG,"inside Settings$AccessibilitySettingsActivity");
-                    settingWindow = SettingWindow.Accessibility;
-                    break;
-                case "android.app.AlertDialog":
-                    Log.d(TAG,"inside android.app.AlertDialog");
-                    settingWindow = SettingWindow.AlertDialog;
-                    break;
-                default:
-                    Log.e("Unexpected value: " , accessibilityEvent.getClassName().toString());
-                    settingWindow = SettingWindow.Default;
-                    break;
+
             }
+
         }
 
     }
@@ -199,7 +197,7 @@ public class LenovoAutomator extends AccessibilityService {
 
             // Point 2. Disable apps:
             // TODO change the node text into "SEE ALL 33(32+1)  APPS"
-            AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 30 apps");
+            AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 33 apps");
             if(seeAllAppBtn == null){
                 seeAllAppBtn = findNodeWithText("App info");
             }
@@ -209,9 +207,9 @@ public class LenovoAutomator extends AccessibilityService {
 
                 // Specific apps (8 apps) to disable or uninstall on lenovo tablet
                 disableApp("Android Auto");
-                    // Point 4. Allow Unknown Apps
-                    allowUnknownAppsFrom("Chrome");
-                    // Point 4 completed
+                // Point 4. Allow Unknown Apps
+                allowUnknownAppsFrom("Chrome");
+                // Point 4 completed
                 disableApp("Digital Wellbeing");
                 disableApp("Google Play Movies & TV");
                 disableApp("Keep notes");

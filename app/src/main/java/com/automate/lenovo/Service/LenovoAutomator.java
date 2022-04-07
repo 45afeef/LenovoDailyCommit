@@ -11,11 +11,13 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
 import android.graphics.Path;
 import android.graphics.Rect;
+import android.media.MediaActionSound;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Toast;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -67,7 +69,8 @@ public class LenovoAutomator extends AccessibilityService {
         // package names here. Otherwise, when the service is activated, it will listen
         // to events from all applications.
         info.packageNames = new String[]
-                {"com.android.settings"};
+                {"com.android.settings","com.google.android","com.google.android.permissioncontroller"};
+
 
         // Set the type of feedback your service will provide.
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_VISUAL;
@@ -119,40 +122,39 @@ public class LenovoAutomator extends AccessibilityService {
                 case "com.oppo.settings.SettingsActivity":
                 case "com.android.settings.homepage.SettingsHomepageActivity":
                     // wait for a while so that the auto app can make sure that settings app is fully loaded
-//                    sleep(6000);
+                    sleep(2000);
 
-
-                    // Point 10
-//                    enableDeveloperOptionsInEmulator();
-                    // enableDeveloperOptionsInTablet();
-                    //
-                    // Still Need to add script to enable usb debugging
-
+                    // Completed Points
+                    // Point 1
+                    swipeDownForNotification();
 
                     // Point 2
-                    // Apps and notifications
+                    // Point 3
+                    // Point 4
+                    // Point 5
                     appsAndNotifications();
-                    // Disable Apps Completed
+
+                    // Point 6. Indicator light
+                    // Point 7. Sleep Setting
+                    displaySettings();
+
+                    // Point 8. Tablet Volume
+                    // already done when click on the automate button
+
+                    // Point 9. Disable TalkBack shortcut
+                    turnOffAccessibilityVolume();
+
+                    // Point 10
+                    //enableDeveloperOptionsInEmulator();
+                    enableDeveloperOptionsInTablet();
 
 
-                    // 200 145
-                    // 325 145
-                    // 450 145
                     break;
                 case "com.android.settings.Settings$ManageExternalSourcesActivity":
                     sleep(6000);
                     Log.d(TAG,"inside Settings$ManageExternalSourcesActivity");
                     settingWindow = SettingWindow.UnknownSourceInstallation;
                     switchOn("Chrome");
-
-                    sleep(100);
-                    swipeDownForNotification();
-                    sleep(1200);
-                    performGestureClick(120,250);
-                    performGestureClick(280,250);
-                    performGestureClick(430,250);
-                    performGestureClick(580,250);
-
                     break;
                 case "com.android.settings.Settings$AccessibilitySettingsActivity":
                     Log.d(TAG,"inside Settings$AccessibilitySettingsActivity");
@@ -171,38 +173,44 @@ public class LenovoAutomator extends AccessibilityService {
 
     }
 
+    private void turnOffAccessibilityVolume() {
+        AccessibilityNodeInfo accessibilityNode = scrollAndFindTheNodeWithText("Accessibility");
+        if(click(clickableParent(accessibilityNode))) {
+            sleep();
+            AccessibilityNodeInfo volumeKeyShortcut = findNodeWithText("Volume key shortcut");
+            if (performGestureClick(volumeKeyShortcut)) {
+                sleep();
+                clickOnTheParentsClickable("Use service");
+                sleep();
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
+            }
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
+        }
+    }
+
     private void appsAndNotifications() {
         AccessibilityNodeInfo appAndNotifications = scrollAndFindTheNodeWithText("Apps & notifications");
-        AccessibilityNodeInfo clickable = getParentNodeWithAction(appAndNotifications,ACTION_CLICK);
-        if(click(clickable)){
+        if (click(clickableParent(appAndNotifications))) {
             sleep(5000);
 
+
             // Point 2. Disable apps:
-            // TODO change the node text into "SEE ALL 32 APPS"
+            // TODO change the node text into "SEE ALL 33(32+1)  APPS"
             AccessibilityNodeInfo seeAllAppBtn = findNodeWithText("See all 29 apps");
+            if(seeAllAppBtn == null){
+                seeAllAppBtn = findNodeWithText("App info");
+            }
             // Disable or Uninstall all apps
-            if(true){}else if(performGestureClick(seeAllAppBtn)){
+            if (performGestureClick(seeAllAppBtn)) {
                 sleep();
+
+                // Specific apps (8 apps) to disable or uninstall on lenovo tablet
                 disableApp("Android Auto");
-                // Point 4. Allow Unknown Apps
-                AccessibilityNodeInfo chromeNode = findNodeWithText("Chrome");
-                if(performGestureClick(chromeNode)){
-                    sleep();
-                    AccessibilityNodeInfo installUnknownAppsNode = scrollAndFindTheNodeWithText("Install unknown apps");
-                    if(performGestureClick(installUnknownAppsNode)){
-                        sleep();
-                        AccessibilityNodeInfo allowTextNode = scrollAndFindTheNodeWithText("Allow from this source");
-                        AccessibilityNodeInfo allowSwitch = findNodeWithAction(allowTextNode.getParent(),ACTION_CLICK);
-                        sleep();
-                        click(allowSwitch);
-                        sleep();
-                        performGlobalAction(GLOBAL_ACTION_BACK);
-                        sleep();
-                    }
-                    performGlobalAction(GLOBAL_ACTION_BACK);
-                    sleep();
-                }
-                // Point 4 completed
+                    // Point 4. Allow Unknown Apps
+                    allowUnknownAppsFrom("Chrome");
+                    // Point 4 completed
                 disableApp("Digital Wellbeing");
                 disableApp("Google Play Movies & TV");
                 disableApp("Keep notes");
@@ -210,40 +218,24 @@ public class LenovoAutomator extends AccessibilityService {
                 unInstallApp("Sound Recorder");
                 disableApp("YouTube");
                 disableApp("YouTube Music");
-
                 sleep();
+
                 performGlobalAction(GLOBAL_ACTION_BACK);
                 sleep();
-
-
-
-
-
-
-
-
-
-
-
-//                disableApp("Calendar");
-//                disableApp("chrome");
-//                disableApp("clock");
-//                disableApp("drive");
-//                disableApp("duo");
             }
             // Disable or Uninstall of apps completed
-            // Play with notifications
 
 
-            // Now
+
+
             // Point 3. Disable Notifications for all apps
             AccessibilityNodeInfo notificationsNode = findNodeWithText("Notifications");
-            if(performGestureClick(notificationsNode)){
+            if (performGestureClick(notificationsNode)) {
                 sleep();
 
-                // Don't show notifications on lockscreen
+                // a. Don't show notifications on lockscreen
                 AccessibilityNodeInfo notificationsOnLockScreen = findNodeWithText("Notifications on lockscreen");
-                if(performGestureClick(notificationsOnLockScreen)){
+                if (performGestureClick(notificationsOnLockScreen)) {
                     sleep();
                     AccessibilityNodeInfo dontShow = findNodeWithText("Don’t show notifications");
                     performGestureClick(dontShow);
@@ -252,37 +244,113 @@ public class LenovoAutomator extends AccessibilityService {
 
                 // Go to advanced
                 AccessibilityNodeInfo advancedNode = scrollAndFindTheNodeWithText("Advanced");
-                if(performGestureClick(advancedNode)){
+                if (click(clickableParent(advancedNode))) {
                     sleep();
-
                     clickOnTheParentsClickable("Suggested actions and replies");
                     clickOnTheParentsClickable("Allow notification dots");
                     clickOnTheParentsClickable("Blink light");
                     clickOnTheParentsClickable("Display status bar icons");
                     sleep();
                 }
+
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
+            }
+
+
+
+
+            // Point 5. Turn OFF Smart Launcher
+            AccessibilityNodeInfo defaultApps = findNodeWithText("Default apps");
+            if (performGestureClick(defaultApps)) {
+                sleep();
+                AccessibilityNodeInfo imageButton = findNodeByClassName("android.widget.ImageButton",findNodeWithText("Home app").getParent().getParent());
+                if(click(clickableParent(imageButton))){
+                    sleep();
+                    clickOnTheParentsClickable("Add icon to Home screen");
+                    clickOnTheParentsClickable("Show Google App");
+                    sleep();
+                    performGlobalAction(GLOBAL_ACTION_BACK);
+                }
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
+            }
+
+
+
+            // go back to settings home
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
+        }
+    }
+
+
+
+    private void allowUnknownAppsFrom(String nodeText) {
+        AccessibilityNodeInfo chromeNode = scrollAndFindTheNodeWithText(nodeText);
+        if (performGestureClick(chromeNode)) {
+            sleep();
+            AccessibilityNodeInfo advancedNode = scrollAndFindTheNodeWithText("Advanced");
+            if(click(clickableParent(advancedNode))){
+                sleep();
+            }
+            AccessibilityNodeInfo installUnknownAppsNode = scrollAndFindTheNodeWithText("Install unknown apps");
+            if (performGestureClick(installUnknownAppsNode)) {
+                sleep();
+                AccessibilityNodeInfo allowTextNode = scrollAndFindTheNodeWithText("Allow from this source");
+                AccessibilityNodeInfo allowSwitch = findNodeWithAction(allowTextNode.getParent(), ACTION_CLICK);
+                sleep();
+                click(allowSwitch);
+                sleep();
                 performGlobalAction(GLOBAL_ACTION_BACK);
                 sleep();
             }
             performGlobalAction(GLOBAL_ACTION_BACK);
             sleep();
+        }
+    }
 
-            // TODO reached here
-            // Now play with default apps
+
+    private  void displaySettings(){
+        // now Goto Display -> Indicator light
+        AccessibilityNodeInfo displayNode = scrollAndFindTheNodeWithText("Display");
+        if (click(clickableParent(displayNode))) {
+            sleep();
+            // Indicator Light
+            AccessibilityNodeInfo indicatorLightNode = scrollAndFindTheNodeWithText("Indicator light");
+            if(click(clickableParent(indicatorLightNode))){
+                sleep();
+                clickOnTheParentsClickable("Indicator light flashes upon receiving notifications");
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
+            }
+
+            // Sleep
+            AccessibilityNodeInfo sleepNode = scrollAndFindTheNodeWithText("Sleep");
+            if(click(clickableParent(sleepNode))){
+                AccessibilityNodeInfo fiveMinute = scrollAndFindTheNodeWithText("5 minutes");
+                click(clickableParent(fiveMinute));
+                sleep(100);
+            }
+
+            // go back to settings home
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
         }
     }
 
     private void clickOnTheParentsClickable(String nodeText) {
-        AccessibilityNodeInfo node = findNodeWithText(nodeText);
-        AccessibilityNodeInfo clickableSibling = findNodeWithAction(node.getParent(),ACTION_CLICK);
-        performGestureClick(clickableSibling);
-        sleep();
+        AccessibilityNodeInfo node = scrollAndFindTheNodeWithText(nodeText);
+        if(node != null){
+            AccessibilityNodeInfo clickableSibling = findNodeWithAction(node.getParent(),ACTION_CLICK);
+            performGestureClick(clickableSibling);
+            sleep();
+        }
     }
 
     private void disableApp(String appName) {
         AccessibilityNodeInfo appNameNode = scrollAndFindTheNodeWithText(appName);
-        AccessibilityNodeInfo clickable = getParentNodeWithAction(appNameNode,ACTION_CLICK);
-        if(click(clickable)){
+        if(click(clickableParent(appNameNode))){
             sleep();
             AccessibilityNodeInfo disableBtn = findNodeWithText("Disable");
             if(performGestureClick(disableBtn)){
@@ -299,8 +367,7 @@ public class LenovoAutomator extends AccessibilityService {
 
     private void unInstallApp(String appName) {
         AccessibilityNodeInfo appNameNode = scrollAndFindTheNodeWithText(appName);
-        AccessibilityNodeInfo clickable = getParentNodeWithAction(appNameNode,ACTION_CLICK);
-        if(click(clickable)){
+        if(click( clickableParent(appNameNode))){
             sleep();
             AccessibilityNodeInfo disableBtn = findNodeWithText("UNINSTALL");
             if(performGestureClick(disableBtn)){
@@ -316,8 +383,7 @@ public class LenovoAutomator extends AccessibilityService {
 
     private void enableDeveloperOptionsInEmulator() {
         AccessibilityNodeInfo aboutTablet = scrollAndFindTheNodeWithText("About emulated device");
-        AccessibilityNodeInfo clickableTablet =  getParentNodeWithAction(aboutTablet,ACTION_CLICK);
-        if(click(clickableTablet)){
+        if(click( clickableParent(aboutTablet))){
             sleep();
             AccessibilityNodeInfo buildNumber = scrollAndFindTheNodeWithText("Build number");
             for (int i = 0; i<7 ; i++){
@@ -331,31 +397,44 @@ public class LenovoAutomator extends AccessibilityService {
         // Go to System > About Tablet > Build Number
         // Go to System > Developer Options > Enable USB Debugging
         AccessibilityNodeInfo systemNode = scrollAndFindTheNodeWithText("System");
-        AccessibilityNodeInfo clickableNode = getParentNodeWithAction(systemNode,ACTION_CLICK);
-        if(click(clickableNode)){
+        if(click(clickableParent(systemNode))){
             // System subSetting menu opened
             // wait a while
             sleep();
             AccessibilityNodeInfo aboutTablet = scrollAndFindTheNodeWithText("About Tablet");
-            AccessibilityNodeInfo clickableTablet =  getParentNodeWithAction(aboutTablet,ACTION_CLICK);
-            if(click(clickableTablet)){
+            if(click(clickableParent(aboutTablet))){
                 sleep();
                 AccessibilityNodeInfo buildNumber = scrollAndFindTheNodeWithText("Build number");
                 for (int i = 0; i<8 ; i++){
                     performGestureClick(buildNumber);
                 }
+                sleep(500);
+                performGlobalAction(GLOBAL_ACTION_BACK);
                 sleep();
-
-            }else{
-                // Todo Error on clicking the about tablet
             }
-        }else{
-            // TODO error while clicking the SYSTEM node
+
+            AccessibilityNodeInfo devOptions = scrollAndFindTheNodeWithText("Developer Options");
+            if(click(clickableParent(devOptions))){
+                sleep();
+                clickOnTheParentsClickable("USB debugging");
+                sleep(500);
+                AccessibilityNodeInfo ok = findNodeWithText("OK");
+                click(clickableParent(ok));
+                sleep(100);
+                performGlobalAction(GLOBAL_ACTION_BACK);
+                sleep();
+            }
+
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            sleep();
         }
     }
 
     enum ScrollDirection{
         Down,Up,Left,Right
+    }
+    private AccessibilityNodeInfo clickableParent(AccessibilityNodeInfo node) {
+        return getParentNodeWithAction(node, ACTION_CLICK);
     }
     private AccessibilityNodeInfo getParentNodeWithAction(AccessibilityNodeInfo node, AccessibilityNodeInfo.AccessibilityAction action) {
         if(node == null) return null;
@@ -365,8 +444,8 @@ public class LenovoAutomator extends AccessibilityService {
         }else{
             return  getParentNodeWithAction(node.getParent(),action);
         }
-
     }
+
     private AccessibilityNodeInfo scrollAndFindTheNodeWithText(String text) {
         AccessibilityNodeInfo node = findNodeWithText(text);
 
@@ -388,6 +467,8 @@ public class LenovoAutomator extends AccessibilityService {
             AccessibilityNodeInfo root,
             AccessibilityNodeInfo.AccessibilityAction action
     ) {
+        if (root == null){return null;}
+
         Deque<AccessibilityNodeInfo> deque = new ArrayDeque<>();
         deque.add(root);
         while (!deque.isEmpty()) {
@@ -423,7 +504,6 @@ public class LenovoAutomator extends AccessibilityService {
         deque.add(getRootInActiveWindow());
         while (!deque.isEmpty()) {
             AccessibilityNodeInfo node = deque.removeFirst();
-            Log.d(TAG, "findNodeWithText: afeefafeefafeef " + getAllTextFromNode(node));
             if (getAllTextFromNode(node).replace("'","").equalsIgnoreCase(text)) {
                 return node;
             }
@@ -589,7 +669,19 @@ public class LenovoAutomator extends AccessibilityService {
                 super.onCompleted(gestureDescription);
             }
         }, null);
+        sleep(2000);
+//        performGestureClick(120,250);
+//        performGestureClick(280,250);
+//        performGestureClick(430,250);
+//        performGestureClick(580,250);
+        // Specific points for lenovo tablets
+         performGestureClick(200, 145);
+         performGestureClick(325, 145);
+         performGestureClick(450, 145);
         sleep();
+        performGlobalAction(GLOBAL_ACTION_BACK);
+        sleep();
+
     }
 
 
@@ -653,3 +745,79 @@ public class LenovoAutomator extends AccessibilityService {
         printNode(nodeInfo.getParent());
     }
 }
+//2. Disable apps: (Can apps be disable programmatically?
+//    Ok if not)
+//    a. In Settings → Apps & notifications → See all apps
+//    b. Disable or Uninstall→and confirm Disable or Uninstall
+//            (Disable the following apps if possible)
+//    i. Android Auto
+//    ii. Digital Wellbeing
+//    iii. Google Play Movies and TV
+//    iv. Keep notes
+//    v. MusicFX
+//    vi. Sound Recorder
+//    vii. YouTube
+//    viii.YouTube Music
+//3. Disable Notifications for all apps
+//    a. In Settings → Apps & notifications → Notifications
+//    b. Set Notifications to Don’t Show
+//    i. Set Don’t show notifications
+//    c. Set these Advanced settings as toggle OFF:
+//    i. Suggested actions and replies OFF
+//    ii. Allow notifications dots OFF
+//    iii. Blink lights OFF
+//    iv. Display status bar icons OFF
+//4. Allow Unknown Apps
+//    i. In Settings → Apps & notifications
+//    ii. On the apps list select Chrome → Install unknown apps
+//→ set ON Allow from this source.
+//6. Indicator light
+//    a. In Settings → Display → Indicator Light
+//    b. Toggle OFF indicator light flashes upon receiving
+//            notifications
+//7. Sleep Setting
+//    a. In Settings → Display → Sleep → Select 5 min
+//1. Turn ON Bluetooth, turn OFF auto-rotate, turn OFF
+//    notification volume.
+//            1. Bluetooth icon ON, auto-rotate icon OFF, notifications
+//            OFF
+//8. Tablet volume
+//    a. Sound → Set Media Volume to about 50%
+//    b. Set both Alarm volume & Notification volume down
+//    to 0%.
+//9. Disable TalkBack shortcut
+//    a. In Accessibility -> select Volume key shortcut ->
+//    toggle OFF Use Service setting.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    Android Settings to Set Programmatically
+//5. Turn OFF Smart Launcher
+//    i. In Apps & Notifications → Default apps → set these
+//    settings
+//    ii. Set OFF “Add icon to Home screen”
+//    iii. Set OFF “Show Google App”
+//10. Set USB debugging ON.
+//    Under settings->system->Developer options, turn ON
+//    USB debugging (enabled).
+//            (If done manually, need to click the build number 7 times in
+//    settings->system->About tablet to enable developer option.)
+//

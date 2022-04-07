@@ -3,6 +3,7 @@ package com.automate.lenovo.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Button;
@@ -47,9 +48,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.button2).setOnClickListener(view -> {
-            startActivity(new Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS));
+           startActivity(new Intent(Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS));
         });
         findViewById(R.id.button3).setOnClickListener(view -> {
+
+            // Set Audio
+            AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM,audioManager.getStreamMinVolume(AudioManager.STREAM_ALARM),0);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/2,0);
+            audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION,audioManager.getStreamMinVolume(AudioManager.STREAM_NOTIFICATION),0);
+            // Audio set successfully
             startActivity(new Intent(Settings.ACTION_SETTINGS));
 //            Settings.ACTION_APPLICATION_SETTINGS
 
@@ -57,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String querySettingPkgName() {
-        Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+        Intent intent = new Intent(Settings.ACTION_HOME_SETTINGS);
         List<ResolveInfo> resolveInfos = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
         if (resolveInfos == null || resolveInfos.size() == 0) {
             return "";
